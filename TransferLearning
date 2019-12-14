@@ -1,0 +1,59 @@
+# Libraries used
+library(keras)
+library(EBImage)
+library(tensorflow)
+
+# Identify image 
+pretrained <- application_resnet50(weights = 'imagenet')
+setwd("~/Desktop")
+img <- image_load("dog.jpg", target_size = c(224,224))
+x <- image_to_array(img)
+x <- array_reshape(x, c(1, dim(x)))
+x <- imagenet_preprocess_input(x)
+preds <- pretrained %>% predict(x)
+imagenet_decode_predictions(preds, top = 5)[[1]]
+
+# CIFAR10 data
+data <- dataset_cifar10()
+trainx <- data$train$x[1:2000,,,]
+testx <- data$test$x[1:2000,,,]
+trainy <- to_categorical(data$train$y[1:2000,], num_classes = 10)
+testy <- to_categorical(data$test$y[1:2000,], num_classes = 10)
+
+# Data preprocessing
+x <- array(rep(0, 2000*224*224*3), dim = c(2000, 224, 224, 3))
+for (i in 1:2000) {x[i,,,] <- resize(trainx[i,,,], 224, 224)}
+trainx <- imagenet_preprocess_input(x)
+
+x <- array(rep(0, 2000*224*224*3), dim = c(2000, 224, 224, 3))
+for (i in 1:2000) {x[i,,,] <- resize(testx[i,,,], 224, 224)}
+testx <- imagenet_preprocess_input(x)
+
+# Model with RESNET50
+pretrained <- application_resnet50(weights = 'imagenet',
+                                   include_top = FALSE,
+                                   input_shape = c(224, 224, 3))
+
+model <- keras_model_sequential() %>% 
+         pretrained %>% 
+         layer_flatten() %>% 
+         layer_dense(units = 256, activation = 'relu') %>% 
+         layer_dense(units = 10, activation = 'softmax')
+freeze_weights(pretrained)
+
+# Compile
+model %>% compile(loss = "categorical_crossentropy",
+                  optimizer = 'adam',
+                  metrics = 'accuracy')
+
+# Fit model
+history <- model %>% fit(trainx,
+                         trainy,
+                         epochs = 10,
+                         batch_size = 10,
+                         validation_split = 0.2)
+
+# Evaluation & prediction
+model %>% evaluate(testx, testy)
+pred <- model %>% predict_classes(testx)
+table(Predicted = pred, Actual = data$test$y[1:2000,])
