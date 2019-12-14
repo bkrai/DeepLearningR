@@ -5,7 +5,6 @@ library(tfruns)
 
 # Data
 data <- read.csv('CTG.csv', header = T)
-str(data)
 
 # Matrix
 data <- as.matrix(data)
