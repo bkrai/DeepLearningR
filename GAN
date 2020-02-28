@@ -1,0 +1,117 @@
+# Libraries
+library(keras)
+library(EBImage)
+
+# MNIST data
+mnist <- dataset_mnist()
+c(c(trainx, trainy), c(testx, testy)) %<-% mnist
+trainx <- trainx[trainy == 5,,]
+par(mfrow = c(8, 8), mar = rep(0, 4))
+for (i in 1:64) plot(as.raster(trainx[i,,], max = 255))
+trainx <- array_reshape(trainx, c(nrow(trainx), 28, 28, 1))
+trainx <- trainx/255
+
+# Generator network
+h <- 28; w <- 28; c <- 1; l <- 28
+gi <- layer_input(shape = l)
+go <- gi %>% layer_dense(units = 32 * 14 * 14) %>% 
+  layer_activation_leaky_relu() %>% 
+  layer_reshape(target_shape = c(14, 14, 32)) %>% 
+  layer_conv_2d(filters = 32,
+                kernel_size = 5,
+                padding = "same") %>% 
+  layer_activation_leaky_relu() %>% 
+  layer_conv_2d_transpose(filter = 32,
+                          kernel_size = 4,
+                          strides = 2,
+                         padding = "same") %>% 
+  layer_activation_leaky_relu() %>%  
+  layer_conv_2d(filters = 1,
+                kernel_size = 5,
+                activation = "tanh",
+                padding = "same")
+g <- keras_model(gi, go)
+
+# Discriminator
+di <- layer_input(shape = c(h, w, c))
+do <- di %>% 
+  layer_conv_2d(filters = 64,
+                kernel_size = 4) %>% 
+  layer_activation_leaky_relu() %>%  
+  layer_flatten() %>% 
+  layer_dropout(rate = 0.3) %>% 
+  layer_dense(units = 1,
+              activation = "sigmoid")
+d <- keras_model(di, do)
+
+# Compile
+d %>% compile(optimizer = 'rmsprop', loss = 'binary_crossentropy')
+
+# Freeze weights and compile
+freeze_weights(d)
+gani <- layer_input(shape = l)
+gano <- gani %>% g %>% d
+gan <- keras_model(gani, gano)
+gan %>%  compile(optimizer = 'rmsprop',
+                 loss = "binary_crossentropy")
+
+# Training
+b <- 50
+setwd("~/Desktop/")
+dir <- "gan_img"
+dir.create(dir)
+start <- 1; dloss <- NULL; gloss <- NULL
+
+#1. Generate 50 fake images
+for (i in 1:100) {noise <- matrix(rnorm(b*l),
+                                  nrow = b,
+                                  ncol = l)
+fake <- g %>% predict(noise)
+
+#2. Combine real & fake
+stop <- start + b - 1
+real <- trainx[start:stop,,,]
+real <- array_reshape(real, c(nrow(real), 28, 28, 1 ))
+rows <- nrow(real)
+both <- array(0, dim = c(rows*2, dim(real)[-1]))
+both[1:rows,,,] <- fake
+both[(rows+1): (rows*2),,,] <- real
+labels <- rbind(matrix(runif(b, 0.9, 1),
+                       nrow = b,
+                       ncol = 1),
+                matrix(runif(b, 0, 0.1),
+                       nrow = b,
+                       ncol = 1))
+start <- start + b
+
+#3. Train discriminator
+dloss[i] <- d %>% train_on_batch(both, labels)
+
+#4. Train generator using gan
+fakeAsReal <- array(runif(b, 0, 0.1), dim = c(b, 1))
+gloss[i] <- gan %>% train_on_batch(noise, fakeAsReal)
+
+#5. Save fake images
+f <- fake[1,,,]
+dim(f) <- c(28, 28, 1)
+image_array_save(f, path = file.path(dir, 
+                                     paste0("f", i, ".png")))}
+
+# Plot loss
+x <- 1:100
+plot(x, dloss, col = 'red', type = 'l',
+     ylim = c(0, 3),
+     xlab = 'Iterations',
+     ylab = 'Loss')
+lines(x, gloss, col = 'black', type = 'l')
+legend('topright', 
+       legend = c("Discriminator Loss", "GAN Loss"),
+       col = c("red", 'black'), lty = 1:2, cex = 1)
+
+# 100 fake images
+setwd("~/Desktop/gan_img")
+temp = list.files(pattern = "*.png")
+mypic <- list()
+for (i in 1:length(temp))  {mypic[[i]] <- readImage(temp[[i]])}
+par(mfrow = c(10,10))
+for (i in 1:length(temp)) plot(mypic[[i]])
