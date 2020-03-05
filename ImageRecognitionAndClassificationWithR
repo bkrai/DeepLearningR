@@ -2,6 +2,10 @@
 library(EBImage)
 library(keras)
 
+# To install EBimage package, you can run following 2 lines;
+# install.packages("BiocManager") 
+# BiocManager::install("EBImage")
+
 # Read images
 setwd('---')
 pics <- c('p1.jpg', 'p2.jpg', 'p3.jpg', 'p4.jpg', 'p5.jpg', 'p6.jpg',
