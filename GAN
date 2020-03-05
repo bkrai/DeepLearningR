@@ -2,6 +2,10 @@
 library(keras)
 library(EBImage)
 
+#To install EBimage package, you can run following 2 lines;
+#install.packages("BiocManager") 
+#BiocManager::install("EBImage")
+
 # MNIST data
 mnist <- dataset_mnist()
 c(c(trainx, trainy), c(testx, testy)) %<-% mnist
