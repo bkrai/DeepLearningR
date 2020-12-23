@@ -85,19 +85,6 @@ f <- fake[1,,,]
 dim(f) <- c(28,28,1)
 image_array_save(f, path = file.path(dir, paste0("f", i+100, ".png")))}
 
-# Plot loss
-makePlot <- function() {
-x <- 1:100
-plot(x, dloss, col = 'red', type = 'l',
-     ylim = c(0,3),
-     xlab = 'Iteration',
-     ylab = 'Loss')
-lines(x, gloss, col = 'black', type = 'l')}
-makePlot()
-legend('topright', 
-       legend=c("Discriminator Loss", "GAN Loss"),
-       col = c("red", 'black'), lty = 1:2, cex=2)
-
 #Time
 end <- Sys.time()
 begin
