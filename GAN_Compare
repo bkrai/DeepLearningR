@@ -53,7 +53,7 @@ gan %>% compile(optimizer = 'rmsprop',
 # Train
 b <- 50  
 getwd()
-setwd("/kaggle/working")
+setwd("~/Desktop")
 dir <- "images"
 dir.create(dir)
 # Start 
