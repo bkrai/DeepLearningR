@@ -16,7 +16,6 @@ dimnames(data) <- NULL
 
 # Normalize 
 data[,1:21] <- normalize(data[,1:21])
-data[,22] <- as.numeric(data[,22]) -1
 
 # Partition
 set.seed(1234)
