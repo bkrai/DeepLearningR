@@ -45,8 +45,8 @@ model %>% compile(loss = 'categorical_crossentropy',
 fit <- model %>%   
   fit(training, 
   trainLabels, 
-  epochs = 200,
-  batch_size = 32, 
+  epochs = 25,
+  batch_size = 8, 
   validation_split = 0.2)
   plot(fit)
 
