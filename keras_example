@@ -1,0 +1,59 @@
+library(keras)
+
+# Data
+data <- read.csv('/content/sample_data/CTG.csv', header=T)
+data$NSP <- data$NSP -1
+barplot(prop.table(table(data$NSP)),
+        col = rainbow(3),
+        ylim = c(0, 0.8),
+        ylab = 'Proportion',
+        xlab = 'NSP',
+        cex.names = 1.5)
+
+# Matrix
+data <- as.matrix(data)
+dimnames(data) <- NULL  
+
+# Normalize 
+data[,1:21] <- normalize(data[,1:21])
+data[,22] <- as.numeric(data[,22]) -1
+
+# Partition
+set.seed(1234)
+ind <- sample(2, nrow(data), replace = T, prob=c(.7, .3))
+training <- data[ind==1, 1:21]
+test <- data[ind==2, 1:21]
+trainingtarget <- data[ind==1, 22]
+testtarget <- data[ind==2, 22]
+
+# One hot encoding 
+trainLabels <- to_categorical(trainingtarget)
+testLabels <- to_categorical(testtarget)
+
+# Creat sequential model and add layers 
+model <- keras_model_sequential()
+model %>%  layer_dense(units = 8, activation = 'relu', input_shape = c(21)) %>%   
+  layer_dense(units = 3, activation = 'softmax') 
+summary(model)
+
+# Compile 
+model %>% compile(loss = 'categorical_crossentropy', 
+  optimizer = 'adam',
+  metrics = 'accuracy')
+
+# Fit 
+fit <- model %>%   
+  fit(training, 
+  trainLabels, 
+  epochs = 200,
+  batch_size = 32, 
+  validation_split = 0.2)
+  plot(fit)
+
+# Evaluate 
+model %>%  evaluate(test, testLabels)  
+
+# Prediction 
+pred <- model %>% 
+  predict_classes(test)
+table(Predicted=pred, Actual=testtarget)
