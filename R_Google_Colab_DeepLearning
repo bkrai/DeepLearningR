@@ -1,3 +1,4 @@
+#install.packages("keras")
 library(keras)
 
 # Data
@@ -54,5 +55,7 @@ model %>%  evaluate(test, testLabels)
 
 # Prediction 
 pred <- model %>% 
-  predict_classes(test)
+  predict(test) %>%
+   k_argmax() %>%
+   as.integer()
 table(Predicted=pred, Actual=testtarget)
