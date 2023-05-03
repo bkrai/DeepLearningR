@@ -1,3 +1,4 @@
+# YouTube link: https://youtu.be/XVfn6IpoUPU
 #install.packages("keras")
 library(keras)
 
