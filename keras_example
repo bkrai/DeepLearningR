@@ -1,7 +1,7 @@
 library(keras)
 
 # Data
-data <- read.csv('/content/sample_data/CTG.csv', header=T)
+data <- read.csv('https://raw.githubusercontent.com/bkrai/DeepLearningR/master/Cardiotocographic.csv', header=T)
 data$NSP <- data$NSP -1
 barplot(prop.table(table(data$NSP)),
         col = rainbow(3),
