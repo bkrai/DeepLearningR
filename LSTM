@@ -34,9 +34,11 @@ plot(history)
 
 # Prediction
 model %>% evaluate(train_x, train_y)
-pred <- model %>%   predict_classes(train_x)
+pred <- model %>%   predict(train_x)
+pred <- ifelse(pred <0.5, 0, 1)
 table(Predicted=pred, Actual=imdb$train$y)
 
 model %>% evaluate(test_x, test_y)
-pred1 <- model %>%   predict_classes(test_x)
+pred1 <- model %>%   predict(test_x)
+pred1 <- ifelse(pred1 <0.5, 0, 1)
 table(Predicted=pred1, Actual=imdb$test$y)
